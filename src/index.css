@@ -1,0 +1,42 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap');
+
+@theme {
+  --font-display: "Newsreader", serif;
+  --color-primary: #f9d406;
+  --color-background-dark: #23200f;
+  --color-background-light: #f8f8f5;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply font-display bg-background-dark text-slate-100 antialiased;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #353018;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f9d406;
+  border-radius: 10px;
+}
+
+/* Mobile touch-friendly scrollbar for tables */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
