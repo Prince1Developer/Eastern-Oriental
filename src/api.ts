@@ -233,6 +233,17 @@ interface Reservation {
     created_at: string;
 }
 
+interface Contact {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+    status: 'new' | 'read' | 'replied';
+    created_at: string;
+}
+
 interface SettingsData {
     address: string;
     phone: string;
@@ -461,6 +472,40 @@ export const settingsApi = {
     },
 };
 
+// Contacts
+export const contactApi = {
+    create: async (data: { name: string; email: string; phone?: string; subject: string; message: string }): Promise<{ id: number }> => {
+        const response = await ApiClient.request<ApiResponse<{ id: number }>>('/contacts', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return response.data;
+    },
+
+    getAll: async (page: number = 1, perPage: number = 20, status?: string): Promise<any> => {
+        let endpoint = `/contacts?page=${page}&per_page=${perPage}`;
+        if (status) endpoint += `&status=${status}`;
+        const response = await ApiClient.request<any>(endpoint);
+        return response;
+    },
+
+    get: async (id: number): Promise<Contact> => {
+        const response = await ApiClient.request<ApiResponse<Contact>>(`/contacts?id=${id}`);
+        return response.data;
+    },
+
+    updateStatus: async (id: number, status: 'new' | 'read' | 'replied'): Promise<void> => {
+        await ApiClient.request(`/contacts?id=${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        });
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await ApiClient.request(`/contacts?id=${id}`, { method: 'DELETE' });
+    },
+};
+
 // Health Check
 export const healthApi = {
     check: async (): Promise<any> => {
@@ -471,4 +516,4 @@ export const healthApi = {
 
 // Export TokenManager for auth state management
 export { TokenManager, ApiError };
-export type { MenuPdf, GalleryImage, Reservation, SettingsData, ApiResponse, PaginatedResponse };
+export type { MenuPdf, GalleryImage, Reservation, Contact, SettingsData, ApiResponse, PaginatedResponse };

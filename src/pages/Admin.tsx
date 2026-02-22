@@ -1,12 +1,12 @@
 import {
-  Calendar, Check, FileText, HelpCircle, Image as ImageIcon, Lock, LogOut, Menu as MenuIcon, Plus, Settings, Trash2, X
+  Calendar, Check, FileText, HelpCircle, Image as ImageIcon, Lock, LogOut, Mail, Menu as MenuIcon, Plus, Settings, Trash2, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ApiError, GalleryImage, MenuPdf, Reservation, SettingsData,
-  galleryApi, menuPdfApi, reservationsApi, settingsApi
+  ApiError, Contact, GalleryImage, MenuPdf, Reservation, SettingsData,
+  contactApi, galleryApi, menuPdfApi, reservationsApi, settingsApi
 } from '../api';
 
 interface AdminProps {
@@ -22,8 +22,9 @@ interface FAQ {
 }
 
 export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'menu' | 'gallery' | 'settings' | 'faqs'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'menu' | 'gallery' | 'settings' | 'faqs' | 'contacts'>('reservations');
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [menuPdfs, setMenuPdfs] = useState<MenuPdf[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
@@ -37,20 +38,22 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [reservationsData, menuData, galleryData, settingsData, faqsData] = await Promise.all([
+      const [reservationsData, menuData, galleryData, settingsData, faqsData, contactsResponse] = await Promise.all([
         reservationsApi.getAll().then(res => res.data),
         menuPdfApi.getAll(),
         galleryApi.getAll(),
         settingsApi.getAll(),
         fetch(`${import.meta.env.VITE_API_URL}/faqs?all=1`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
-        }).then(res => res.json()).then(data => data.data || [])
+        }).then(res => res.json()).then(data => data.data || []),
+        contactApi.getAll(1, 100)
       ]);
       setReservations(reservationsData);
       setMenuPdfs(menuData);
       setGalleryImages(galleryData);
       setSettings(settingsData);
       setFaqs(faqsData);
+      setContacts(contactsResponse.data || []);
     } catch (error) {
       console.error("Error fetching admin data", error);
       if (error instanceof ApiError && error.status === 401) {
@@ -176,6 +179,28 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
     }
   };
 
+  const updateContactStatus = async (id: number, status: 'new' | 'read' | 'replied') => {
+    try {
+      await contactApi.updateStatus(id, status);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to update contact status:', error);
+      alert('Failed to update contact status');
+    }
+  };
+
+  const deleteContact = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this contact?')) return;
+
+    try {
+      await contactApi.delete(id);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+      alert('Failed to delete contact');
+    }
+  };
+
   const handleLogout = () => {
     onLogout();
     navigate('/');
@@ -228,6 +253,13 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
             <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />
             <span className="hidden sm:inline">FAQs</span>
           </button>
+          <button
+            onClick={() => setActiveTab('contacts')}
+            className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap ${activeTab === 'contacts' ? 'bg-primary text-background-dark font-bold' : 'hover:bg-primary/10 text-slate-400'}`}
+          >
+            <Mail className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="hidden sm:inline">Contacts</span>
+          </button>
         </nav>
 
         <button
@@ -249,7 +281,7 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
       <main className="flex-1 p-4 sm:p-6 md:p-10 overflow-y-auto">
         <header className="mb-6 md:mb-10">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold capitalize">{activeTab} Management</h1>
-          <p className="text-slate-400 text-sm md:text-base">Manage your restaurant's {activeTab} here.</p>
+          <p className="text-slate-400 text-sm md:text-base">Manage your restaurant&apos;s {activeTab} here.</p>
         </header>
 
         <AnimatePresence mode="wait">
@@ -579,6 +611,104 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
                   </div>
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'contacts' && (
+            <motion.div
+              key="contacts"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <div className="bg-background-dark rounded-xl border border-primary/10 overflow-x-auto">
+                <table className="w-full text-left min-w-[700px]">
+                  <thead className="bg-zinc-900 text-primary/60 text-xs uppercase font-bold">
+                    <tr>
+                      <th className="px-6 py-4">Name</th>
+                      <th className="px-6 py-4">Email</th>
+                      <th className="px-6 py-4">Subject</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Date</th>
+                      <th className="px-6 py-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-primary/5">
+                    {contacts.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
+                          No contact messages yet
+                        </td>
+                      </tr>
+                    ) : (
+                      contacts.map(contact => (
+                        <tr key={contact.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold">{contact.name}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-300">
+                            <a href={`mailto:${contact.email}`} className="hover:text-primary transition-colors">
+                              {contact.email}
+                            </a>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className="line-clamp-1" title={contact.subject}>
+                              {contact.subject}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <select
+                              value={contact.status}
+                              onChange={(e) => updateContactStatus(contact.id, e.target.value as 'new' | 'read' | 'replied')}
+                              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border-0 cursor-pointer transition-colors ${
+                                contact.status === 'replied'
+                                  ? 'bg-green-500/20 text-green-500'
+                                  : contact.status === 'read'
+                                    ? 'bg-blue-500/20 text-blue-500'
+                                    : 'bg-yellow-500/20 text-yellow-500'
+                              }`}
+                            >
+                              <option value="new">New</option>
+                              <option value="read">Read</option>
+                              <option value="replied">Replied</option>
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-400">
+                            {new Date(contact.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <a
+                                href={`mailto:${contact.email}`}
+                                className="p-2 hover:text-blue-400 transition-colors"
+                                title="Reply via email"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </a>
+                              <button
+                                onClick={() => deleteContact(contact.id)}
+                                className="p-2 hover:text-red-500 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Contact Details Modal - Optional: Click to view full message */}
+              {contacts.length > 0 && (
+                <div className="text-xs text-slate-400 p-4 bg-zinc-900/50 rounded-lg border border-primary/10">
+                  <p className="font-semibold text-slate-300 mb-2">Tip:</p>
+                  <p>Click the email icon to reply to a contact. Change status from "New" to "Read" or "Replied" to track your progress.</p>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

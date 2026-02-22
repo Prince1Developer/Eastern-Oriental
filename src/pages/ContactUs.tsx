@@ -1,11 +1,13 @@
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { settingsApi, type SettingsData } from '../api';
+import { settingsApi, contactApi, type SettingsData, ApiError } from '../api';
 
 export const ContactUs = () => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,14 +24,32 @@ export const ContactUs = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulated form submission
-    setSubmitted(true);
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-    setTimeout(() => setSubmitted(false), 5000);
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await contactApi.create({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: formData.message
+      });
+
+      setSubmitted(true);
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to send message. Please try again.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading || !settings) {
@@ -158,7 +178,7 @@ export const ContactUs = () => {
             <div className="bg-gradient-to-br from-background-dark to-background-dark/50 border border-primary/20 rounded-2xl p-8 sm:p-10">
               <h3 className="text-2xl font-bold text-white mb-6">Send us a Message</h3>
 
-              {submitted && (
+            {submitted && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -170,6 +190,17 @@ export const ContactUs = () => {
                     <p className="text-green-400 font-medium">Message sent successfully!</p>
                     <p className="text-green-400/80 text-sm">We'll get back to you soon.</p>
                   </div>
+                </motion.div>
+              )}
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                >
+                  <p className="text-red-400 font-medium">{error}</p>
                 </motion.div>
               )}
 
@@ -256,10 +287,11 @@ export const ContactUs = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider"
+                  disabled={submitting}
+                  className="w-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 disabled:cursor-not-allowed text-background-dark font-bold py-4 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider"
                 >
                   <Send className="w-5 h-5" />
-                  Send Message
+                  {submitting ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             </div>

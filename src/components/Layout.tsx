@@ -170,8 +170,8 @@ export const Footer = () => {
           
           {/* Left Section - Opening Hours */}
           <div className="space-y-2">
-            <h3 className="text-base font-bold text-white uppercase tracking-wider">Opening Hours</h3>
-            <div className="space-y-1 text-xs">
+            <h3 className="text-lg font-bold text-white uppercase tracking-wider">Opening Hours</h3>
+            <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-300 font-semibold">Monday</span>
                 <span className="text-slate-400">CLOSED</span>
@@ -189,7 +189,7 @@ export const Footer = () => {
                 <span className="text-slate-400">{loading ? '...' : settings?.hours_sun || 'Hours TBA'}</span>
               </div>
             </div>
-            <p className="text-xs text-slate-500 italic pt-2">
+            <p className="text-sm text-slate-500 italic pt-2">
               Please note that last orders will be taken 15 minutes prior to closing time.
             </p>
           </div>
@@ -199,16 +199,16 @@ export const Footer = () => {
             {/* Hygiene Rating Badge */}
             <div className="w-32 h-32 bg-primary/10 border-4 border-primary rounded-lg flex flex-col items-center justify-center p-2">
               <div className="text-center">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Food Hygiene</p>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Food Hygiene</p>
                 <p className="text-3xl font-black text-primary">5</p>
-                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">EXCELLENT</p>
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-widest mt-0.5">EXCELLENT</p>
               </div>
             </div>
 
             {/* Online Bookings Button */}
             <Link
               to="/reservations"
-              className="border-2 border-primary/40 text-primary px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-background-dark transition-all duration-300"
+              className="border-2 border-primary/40 text-primary px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-widest hover:bg-primary hover:text-background-dark transition-all duration-300"
             >
               Online Bookings
             </Link>
@@ -228,8 +228,8 @@ export const Footer = () => {
           <div className="space-y-3">
             {/* Contact Info */}
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">Contact</h3>
-              <div className="space-y-1 text-xs">
+              <h3 className="text-lg font-bold text-white uppercase tracking-wider">Contact</h3>
+              <div className="space-y-2 text-sm">
                 <a href={`tel:${settings?.phone || ''}`} className="flex items-start gap-3 text-slate-300 hover:text-primary transition-colors">
                   <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" />
                   <span>{loading ? '...' : settings?.phone || 'Phone TBA'}</span>
@@ -252,9 +252,9 @@ export const Footer = () => {
             </div>
 
             {/* Quick Links */}
-            <div className="space-y-1">
-              <p className="font-bold text-white uppercase tracking-wider text-xs">Quick Links</p>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+            <div className="space-y-2">
+              <p className="font-bold text-white uppercase tracking-wider text-sm">Quick Links</p>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-2 text-sm">
                 <Link to="/menu" className="text-slate-300 hover:text-primary transition-colors">Menu</Link>
                 <Link to="/gallery" className="text-slate-300 hover:text-primary transition-colors">Gallery</Link>
                 <Link to="/about-us" className="text-slate-300 hover:text-primary transition-colors">About Us</Link>
@@ -271,10 +271,10 @@ export const Footer = () => {
 
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <p className="text-slate-500 text-xs">
+          <p className="text-slate-500 text-sm">
             © 2024 Eastern Oriental Gastronomy Group. All Rights Reserved.
           </p>
-          <p className="text-slate-500 text-[10px]">
+          <p className="text-slate-500 text-xs">
             Built with care for authentic cuisine
           </p>
         </div>
