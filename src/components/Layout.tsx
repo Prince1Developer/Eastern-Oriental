@@ -283,12 +283,21 @@ export const Footer = () => {
   );
 };
 
-export const Layout: React.FC<LayoutProps> = ({ onLogout, showAdminLink }) => (
-  <>
-    <Navbar onLogout={onLogout} showAdminLink={showAdminLink} />
-    <main className="min-h-screen">
-      <Outlet />
-    </main>
-    <Footer />
-  </>
-);
+export const Layout: React.FC<LayoutProps> = ({ onLogout, showAdminLink }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Scroll to top when location changes
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <Navbar onLogout={onLogout} showAdminLink={showAdminLink} />
+      <main className="min-h-screen">
+        <Outlet />
+      </main>
+      <Footer />
+    </>
+  );
+};

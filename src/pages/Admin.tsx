@@ -67,6 +67,14 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Scroll to top when tab changes
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+      mainContent.scrollTop = 0;
+    }
+  }, [activeTab]);
+
   const updateReservationStatus = async (id: number, status: string) => {
     try {
       await reservationsApi.updateStatus(id, status as 'pending' | 'confirmed' | 'cancelled');
