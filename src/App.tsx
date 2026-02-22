@@ -10,6 +10,9 @@ import { Layout } from './components/Layout';
 import Home from './pages/Home';
 import Menu from './pages/Menu';
 import Gallery from './pages/Gallery';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import FAQs from './pages/FAQs';
 import About from './pages/About';
 import Reservations from './pages/Reservations';
 import Login from './pages/Login';
@@ -36,6 +39,9 @@ export default function App() {
         <Route path="/menu" element={<Menu />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/about" element={<About />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/faqs" element={<FAQs />} />
         <Route path="/reservations" element={<Reservations />} />
       </Route>
 

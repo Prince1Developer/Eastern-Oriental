@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { HelpCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 import { reservationsApi, ApiError } from '../api';
 
 export const Reservations = () => {
@@ -122,6 +125,33 @@ export const Reservations = () => {
           </form>
         </div>
       </div>
+
+      {/* FAQs Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="max-w-4xl mx-auto mt-20"
+      >
+        <div className="bg-gradient-to-r from-background-dark/50 to-background-dark/30 border border-primary/20 rounded-2xl p-8 sm:p-12 text-center">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <HelpCircle className="w-7 h-7 text-primary" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-white italic">
+              Questions About <span className="text-primary">Reservations?</span>
+            </h2>
+          </div>
+          <p className="text-slate-300 mb-8">
+            Please feel free to take a look over our frequently asked questions for more information about our reservation policies, cancellations, and dining options.
+          </p>
+          <Link
+            to="/faqs"
+            className="inline-block bg-primary hover:bg-primary/90 text-background-dark font-bold py-3 px-10 rounded-lg transition-all uppercase tracking-widest"
+          >
+            View FAQs
+          </Link>
+        </div>
+      </motion.div>
     </section>
   );
 };

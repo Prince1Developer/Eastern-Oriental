@@ -1,5 +1,5 @@
 import {
-  Calendar, Check, FileText, Image as ImageIcon, Lock, LogOut, Menu as MenuIcon, Plus, Settings, Trash2, X
+  Calendar, Check, FileText, HelpCircle, Image as ImageIcon, Lock, LogOut, Menu as MenuIcon, Plus, Settings, Trash2, X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useEffect, useState } from 'react';
@@ -13,29 +13,44 @@ interface AdminProps {
   onLogout: () => void;
 }
 
+interface FAQ {
+  id: number;
+  question: string;
+  answer: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'reservations' | 'menu' | 'gallery' | 'settings'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'menu' | 'gallery' | 'settings' | 'faqs'>('reservations');
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [menuPdfs, setMenuPdfs] = useState<MenuPdf[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfUploading, setPdfUploading] = useState(false);
+  const [editingFaqId, setEditingFaqId] = useState<number | null>(null);
+  const [faqFormData, setFaqFormData] = useState({ question: '', answer: '' });
   const navigate = useNavigate();
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [reservationsData, menuData, galleryData, settingsData] = await Promise.all([
+      const [reservationsData, menuData, galleryData, settingsData, faqsData] = await Promise.all([
         reservationsApi.getAll().then(res => res.data),
         menuPdfApi.getAll(),
         galleryApi.getAll(),
-        settingsApi.getAll()
+        settingsApi.getAll(),
+        fetch(`${import.meta.env.VITE_API_URL}/faqs?all=1`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+        }).then(res => res.json()).then(data => data.data || [])
       ]);
       setReservations(reservationsData);
       setMenuPdfs(menuData);
       setGalleryImages(galleryData);
       setSettings(settingsData);
+      setFaqs(faqsData);
     } catch (error) {
       console.error("Error fetching admin data", error);
       if (error instanceof ApiError && error.status === 401) {
@@ -112,6 +127,55 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
     }
   };
 
+  const saveFaq = async () => {
+    if (!faqFormData.question.trim() || !faqFormData.answer.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const url = editingFaqId
+        ? `${import.meta.env.VITE_API_URL}/faqs/${editingFaqId}`
+        : `${import.meta.env.VITE_API_URL}/faqs`;
+
+      const response = await fetch(url, {
+        method: editingFaqId ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(faqFormData),
+      });
+
+      if (!response.ok) throw new Error('Failed to save FAQ');
+      setEditingFaqId(null);
+      setFaqFormData({ question: '', answer: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Error saving FAQ:', error);
+      alert('Failed to save FAQ');
+    }
+  };
+
+  const deleteFaq = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this FAQ?')) return;
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/faqs/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete FAQ');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting FAQ:', error);
+      alert('Failed to delete FAQ');
+    }
+  };
+
   const handleLogout = () => {
     onLogout();
     navigate('/');
@@ -156,6 +220,13 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
           >
             <Settings className="w-4 h-4 md:w-5 md:h-5" />
             <span className="hidden sm:inline">Settings</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('faqs')}
+            className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all text-sm md:text-base whitespace-nowrap ${activeTab === 'faqs' ? 'bg-primary text-background-dark font-bold' : 'hover:bg-primary/10 text-slate-400'}`}
+          >
+            <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="hidden sm:inline">FAQs</span>
           </button>
         </nav>
 
@@ -423,6 +494,91 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
                 <Plus className="w-8 h-8" />
                 <span className="text-xs font-bold uppercase">Add Image</span>
               </button>
+            </motion.div>
+          )}
+
+          {activeTab === 'faqs' && (
+            <motion.div
+              key="faqs"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {/* FAQ Form */}
+              <div className="bg-background-dark p-6 rounded-xl border border-primary/10">
+                <h2 className="text-lg font-bold mb-4">{editingFaqId ? 'Edit FAQ' : 'Add New FAQ'}</h2>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Question"
+                    value={faqFormData.question}
+                    onChange={(e) => setFaqFormData({ ...faqFormData, question: e.target.value })}
+                    className="w-full bg-zinc-900 border border-primary/20 rounded-lg py-3 px-4 outline-none focus:border-primary text-white placeholder-slate-500"
+                  />
+                  <textarea
+                    placeholder="Answer"
+                    value={faqFormData.answer}
+                    onChange={(e) => setFaqFormData({ ...faqFormData, answer: e.target.value })}
+                    className="w-full bg-zinc-900 border border-primary/20 rounded-lg py-3 px-4 outline-none focus:border-primary text-white placeholder-slate-500 min-h-[120px] resize-vertical"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveFaq}
+                      className="bg-primary hover:bg-primary/90 text-background-dark font-bold py-3 px-6 rounded-lg transition-all"
+                    >
+                      {editingFaqId ? 'Update FAQ' : 'Add FAQ'}
+                    </button>
+                    {editingFaqId && (
+                      <button
+                        onClick={() => {
+                          setEditingFaqId(null);
+                          setFaqFormData({ question: '', answer: '' });
+                        }}
+                        className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* FAQs List */}
+              <div className="space-y-3">
+                {faqs.map((faq) => (
+                  <div key={faq.id} className="bg-background-dark p-4 rounded-lg border border-primary/10 hover:border-primary/20 transition-all">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-white mb-1">{faq.question}</h3>
+                        <p className="text-slate-400 text-sm line-clamp-2">{faq.answer}</p>
+                        <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${faq.is_active ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                          {faq.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingFaqId(faq.id);
+                            setFaqFormData({ question: faq.question, answer: faq.answer });
+                          }}
+                          className="text-primary hover:text-primary/60 transition-colors"
+                          title="Edit"
+                        >
+                          <Check className="w-5 h-5 rotate-45" />
+                        </button>
+                        <button
+                          onClick={() => deleteFaq(faq.id)}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
