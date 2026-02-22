@@ -24,7 +24,7 @@ export const Navbar = ({ onLogout, showAdminLink = true }: { onLogout?: () => vo
   };
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-background-dark/90 backdrop-blur-sm border-b border-primary/20">
+    <header className="fixed top-0 w-full z-50 bg-background-dark/90 backdrop-blur-sm">
       <nav className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-12 flex items-center justify-between h-16 sm:h-20">
         <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0 hover:opacity-80 transition-opacity">
           <Utensils className="text-primary w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0" />
@@ -294,7 +294,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, showAdminLink }) => {
   return (
     <>
       <Navbar onLogout={onLogout} showAdminLink={showAdminLink} />
-      <main className="min-h-screen">
+      <main className="min-h-screen bg-zinc-950">
         <Outlet />
       </main>
       <Footer />
